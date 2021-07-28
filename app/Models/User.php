@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +25,7 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'role_id',
         'phone',
+        'is_active',
     ];
 
     /**
@@ -53,5 +56,11 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function roleSub() {
+
+		return $this->hasOne('App\Models\RoleUserSub', 'user_id', 'id');
+
+	}
 
 }

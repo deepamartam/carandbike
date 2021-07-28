@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use JWTAuth;
 use App\Models\User;
+use App\Models\RoleUserSub;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Symfony\Component\HttpFoundation\Response;
@@ -44,6 +45,11 @@ class ApiController extends Controller
         	'email' => $request->email,
             'phone' => $request->phone,
         	'password' => bcrypt($request->password),
+            
+        ]);
+
+        $roleSub = RoleUserSub::create([
+            'user_id' => $user->id,
             'role_id' => $request->role_id,
         ]);
 
@@ -116,7 +122,10 @@ class ApiController extends Controller
 
         //Send failed response if request is not valid
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->messages()], 200);
+            return response()->json([
+                'success' => false,
+                'message' => 'Token Required',
+                'error' => $validator->messages()], 400);
         }
 
 		//Request is validated, do logout        
@@ -137,13 +146,31 @@ class ApiController extends Controller
  
     public function get_user(Request $request)
     {
-        $this->validate($request, [
+
+        //valid credential
+        $validator = Validator::make($request->only('token'), [
             'token' => 'required'
         ]);
- 
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token Required',
+                'error' => $validator->messages()], 400);
+        }
+
+        //$currentUser = JWTAuth::user();
+        
         $user = JWTAuth::authenticate($request->token);
+
+        $role = RoleUserSub::where('user_id', $user->id)->with('role')->get()->first();
  
-        return response()->json(['user' => $user]);
+        return response()->json([
+            'success' => true,
+            'message' => 'User details fetched sucessfuly.',
+            'user'    => $user,
+            'role'    => $role,
+        ], 200);  
     }
 
     /**
