@@ -7,6 +7,7 @@ use JWTAuth;
 use App\Models\User;
 use App\Models\RoleUserSub;
 use App\Models\Role;
+use App\Models\Address;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
@@ -77,6 +78,70 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        //Validate data
+        $data = $request->only('username', 'email', 'firstname', 'lastname', 'password', 'phone', 'image', 'house_no', 'street', 'zip_code', 'city', 'country_id', 'subsidiary_id', 'role_id');
+        $validator = Validator::make($data, [
+            'username' => 'required|string|unique:users',
+            'email' => 'required|email|unique:users',
+            'phone' => 'required|numeric|unique:users',
+            'firstname' => 'required',
+            'lastname' => 'required',
+            'password' => 'required|min:6',
+            'city' => 'required|string',
+            'zip_code' => 'required',
+            'country_id' => 'required',
+            'role_id' => 'required|numeric',
+            'subsidiary_id' => 'required|numeric',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        try {
+
+            $user = User::create([
+                'username' => $request->username,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'image' => $request->image,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => bcrypt($request->password),
+            ]);
+
+            $roleSub = RoleUserSub::create([
+                'user_id' => $user->id,
+                'role_id' => $request->role_id,
+            ]);
+
+            $address = Address::create([
+                'from_user_id' => $user->id,
+                'house_no' => $request->house_no,
+                'street' => $request->street,
+                'zip_code' => $request->zip_code,
+                'country_id' => $request->country_id,
+                'city' => $request->city,
+                'subsidiary_id' => $request->subsidiary_id,
+            ]);
+
+            //User created, return success response
+            Log::info('User created - '.$request->username);
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully',
+            ], 200);
+
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try again'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -87,6 +152,31 @@ class UserController extends Controller
      */
     public function show($id)
     {
+        try {
+
+            $user = User::with('roleSub.role')->where(['id' => $id])->first();
+    
+            if (!$user) {
+                return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+                ], 400);
+            }
+            else {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User fetched successfuly',
+                    'data' => $user
+                ], 200);
+            }
+        
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
+        }
     }
 
     /**
@@ -109,6 +199,70 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        //Validate data
+        $data = $request->only('username', 'email', 'firstname', 'lastname', 'phone', 'image', 'house_no', 'street', 'zip_code', 'city', 'country_id', 'subsidiary_id', 'role_id');
+        $validator = Validator::make($data, [
+            'username' => 'required|string|unique:users,username,'.$user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'phone' => 'required|numeric|unique:users,phone,'.$user->id,
+            'firstname' => 'required',
+            'lastname' => 'required',
+            'city' => 'required|string',
+            'zip_code' => 'required',
+            'country_id' => 'required',
+            //'role_id' => 'required|numeric',
+            'subsidiary_id' => 'required|numeric',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        try {
+
+            $userUpdate = $user->update([
+                'username' => $request->username,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'image' => $request->image,
+                'email' => $request->email,
+                'phone' => $request->phone,
+            ]);
+
+            if($request->role_id) {
+                $roleUpdate = RoleUserSub::where('user_id', $user->id)->update([
+                    'role_id' => $request->role_id,
+                ]);
+            }
+
+            $product = Address::updateOrCreate([
+                'from_user_id' => $user->id,
+            ],[
+                'house_no' => $request->house_no,
+                'street' => $request->street,
+                'zip_code' => $request->zip_code,
+                'country_id' => $request->country_id,
+                'city' => $request->city,
+                'subsidiary_id' => $request->subsidiary_id,
+            ]);
+
+            //User updated, return success response
+            Log::info('User updated - '.$request->name);
+            return response()->json([
+                'success' => true,
+                'message' => 'User updates successfully',
+            ], 200);
+
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try again'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

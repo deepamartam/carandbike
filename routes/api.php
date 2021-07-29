@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +30,15 @@ Route::group(['middleware' => ['jwt.verify']], function() {
      * Users
      */
     Route::get('users/{role}', [UserController::class, 'index']);
+    Route::get('user/{id}', [UserController::class, 'show']);
+    Route::post('add-user', [UserController::class, 'store']);
     Route::put('update-user-status/{user}', [UserController::class, 'statusUpdate']);
     Route::delete('delete-user/{user}', [UserController::class, 'destroy']);
+    Route::put('update-user/{user}', [UserController::class, 'update']);
+
+    /**
+     * Roles
+     */
+    Route::get('roles', [RoleController::class, 'index']);
     
 });
