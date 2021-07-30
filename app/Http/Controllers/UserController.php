@@ -338,4 +338,100 @@ class UserController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    /**
+     * User Email Update
+     */
+    public function changeEmail(Request $request)
+    {
+        //Validate data
+        $validator = Validator::make($request->all(), [
+            'new_email' => 'required|email|unique:users,email|same:email_confirmation',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|max:50'
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        $credentials = $request->only('email','password');
+
+        try {
+            if (! $token = JWTAuth::attempt($credentials)) {
+                return response()->json([
+                	'success' => false,
+                	'message' => 'Incorrect email or password.',
+                ], 400);
+            }
+            else {
+                User::where('email', $request->email)->update([
+                    'email' => $request->new_email,
+                ]);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email updated successfully',
+                ], Response::HTTP_OK);
+            }
+        } catch (JWTException $e) {
+    	return $credentials;
+            return response()->json([
+                	'success' => false,
+                	'message' => 'Somthing went wrong.',
+                ], 500);
+        }
+    }
+
+    public function changePassword(Request $request)
+    {   
+
+        $old_password = $request->old_password;
+        //valid credential
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|min:6|max:50',
+            'new_password' => 'required|min:6|max:50',
+            'confirm_password' => 'required|same:new_password',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Input',
+                'error' => $validator->messages()], 400);
+        }
+
+        try {
+            $user = JWTAuth::authenticate($request->token);
+            if(Hash::check($old_password, $user->password)) {
+
+                User::find($user->id)->update(['password'=> Hash::make($request->new_password)]);
+
+                Log::info('password-updated - '.$user->email);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password changed.'
+                ], 200);
+            }
+            else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password not matched.'
+                ], 400);
+            }
+            
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+    }
 }

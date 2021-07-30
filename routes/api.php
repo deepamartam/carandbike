@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ParentCompanyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,10 +36,17 @@ Route::group(['middleware' => ['jwt.verify']], function() {
     Route::put('update-user-status/{user}', [UserController::class, 'statusUpdate']);
     Route::delete('delete-user/{user}', [UserController::class, 'destroy']);
     Route::put('update-user/{user}', [UserController::class, 'update']);
+    Route::post('update-email', [UserController::class, 'changeEmail']);
+    Route::post('update-user-password', [UserController::class, 'changePassword']);
 
     /**
      * Roles
      */
     Route::get('roles', [RoleController::class, 'index']);
     
+});
+
+Route::group(['middleware' => ['jwt.verify']], function() {
+    //Route::post('create_company_profile',[ParentCompanyController::class, 'createCompany']);
+    //Route::put('update_company_profile',[ParentCompanyController::class, 'updateCompany']);
 });

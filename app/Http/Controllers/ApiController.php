@@ -244,7 +244,7 @@ class ApiController extends Controller
         //Validate data
         $validator = Validator::make($request->all(), [
             'passwordToken' => 'required',
-            'password' => 'required|same:password_confirmation',
+            'password' => 'required|string|min:6|max:50|same:password_confirmation',
         ]);
 
         //Send failed response if request is not valid
