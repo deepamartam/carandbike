@@ -20,75 +20,130 @@ class ParentCompanyController extends Controller
     {
         $this->user = JWTAuth::parseToken()->authenticate();
     }
-    
-    public function createCompany(Request $request , User $user)
-    {
-        $data = $request->only('company_name','contact_person','subsidiary_id');
-        $validator = Validator::make($data, [
-         'company_name'=> 'required|string',
-         'contact_person'=>'required|string',
-         'subsidiary_id' => 'required|numeric',
 
-          
+    public function createCompany(Request $request)
+    {
+        $data = $request->only(
+            'user_id',
+            'company_name',
+            'contact_person',
+            'subsidiary_id',
+            'Image_path',
+            'Company_logo_path',
+            'Address',
+            'Latitude',
+            'Longitude',
+            'No_Of_Dealers',
+            'Establishment_Year'
+        );
+        $validator = Validator::make($data, [
+            'company_name' => 'required|string',
+            'contact_person' => 'required|string',
+            'Image_path' => 'required|string',
+            'Company_logo_path' => 'required|string',
+            'Address' => 'required|string',
+            'Latitude' => 'required|string',
+            'Longitude' => 'required|string',
+            'subsidiary_id' => 'required|numeric',
+            'user_id' => 'required|numeric',
+            'No_Of_Dealers' => 'required|numeric',
+            'Establishment_Year' => 'required|numeric',
+
+
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => implode(" ",$validator->messages()->all()),
-                'error' => $validator->messages()], 400);
+                'message' => implode(" ", $validator->messages()->all()),
+                'error' => $validator->messages()
+            ], 400);
         }
 
         $company = parent_companies::create([
-         'company_name' => $request->company_name,
-         'contact_person' => $request->contact_person,
-         'user_id' => $user->id,
-         
+            'company_name' => $request->company_name,
+            'contact_person' => $request->contact_person,
+            'user_id' => $request->user_id,
+            'Image_path' => $request->Image_path,
+            'Establishment_Year' => $request->Establishment_Year,
+            'No_Of_Dealers' => $request->No_Of_Dealers,
+            'Latitude' => $request->Latitude,
+            'Longitude' => $request->Longitude,
+            'Address' => $request->Address,
+            'Company_logo_path' => $request->Company_logo_path,
+
         ]);
 
         return response()->json([
-         'success' => true,
-         'message' => 'Company created successfully',
+            'success' => true,
+            'message' => 'Company created successfully',
         ], Response::HTTP_OK);
-
-     
-   }
-
-   public function updateCompany(Request $request, User $user)
-    {
-
-      $data = $request->only('company_name','contact_person','subsidiary_id');
-      $validator = Validator::make($data, [
-         'company_name'=> 'required|string',
-         'contact_person'=> 'required|string',
-          'subsidiary_id' => 'required|numeric',
-      ]);
-         //Send failed response if request is not valid
-      if ($validator->fails()) {
-          return response()->json([
-              'success' => false,
-              'message' => implode(" ",$validator->messages()->all()),
-              'error' => $validator->messages()], 400);
-      }
-
-     
-      try {
-
-             $companyupdate = parent_companies::where('user_id', $user->id)->update([
-                 'company_name' => $request->company_name,
-                 'contact_person' => $request->contact_person,
-             ]);
-
-             return response()->json([
-                 'success' => true,
-                 'message' => 'Company Profile updates successfully',
-             ], 200);
-         } catch (JWTException $exception) {
-             return response()->json([
-                 'success' => false,
-                 'message' => 'Something went wrong! Please try again'
-             ], Response::HTTP_INTERNAL_SERVER_ERROR);
-         }
     }
 
+    public function updateCompany(Request $request, $id)
+    {
+
+        $data = $request->only(
+            'user_id',
+            'company_name',
+            'contact_person',
+            'subsidiary_id',
+            'Image_path',
+            'Company_logo_path',
+            'Address',
+            'Latitude',
+            'Longitude',
+            'No_Of_Dealers',
+            'Establishment_Year'
+        );
+        $validator = Validator::make($data, [
+            'company_name' => 'required|string',
+            'contact_person' => 'required|string',
+            'user_id' => 'required|numeric',
+            'Image_path' => 'required|string',
+            'Company_logo_path' => 'required|string',
+            'Address' => 'required|string',
+            'Latitude' => 'required|string',
+            'Longitude' => 'required|string',
+            'No_Of_Dealers' => 'required|numeric',
+            'Establishment_Year' => 'required|numeric',
+
+
+        ]);
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ", $validator->messages()->all()),
+                'error' => $validator->messages()
+            ], 400);
+        }
+
+
+        try {
+
+            $companyupdate = parent_companies::where('id', $id)->update([
+                'company_name' => $request->company_name,
+                'contact_person' => $request->contact_person,
+                'Image_path' => $request->Image_path,
+                'Establishment_Year' => $request->Establishment_Year,
+                'No_Of_Dealers' => $request->No_Of_Dealers,
+                'Latitude' => $request->Latitude,
+                'Longitude' => $request->Longitude,
+                'Address' => $request->Address,
+                'Company_logo_path' => $request->Company_logo_path,
+
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Company Profile updates successfully',
+            ], 200);
+        } catch (JWTException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try again'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

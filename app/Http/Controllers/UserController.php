@@ -200,7 +200,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         //Validate data
-        $data = $request->only('username', 'email', 'firstname', 'lastname', 'phone', 'image', 'house_no', 'street', 'zip_code', 'city', 'country_id', 'subsidiary_id', 'role_id');
+        $data = $request->only('username', 'email', 'firstname', 'lastname', 'phone', 'image', 'house_no', 'street', 'zip_code', 'city', 'country_id', 'subsidiary_id', 'role_id', 'password');
         $validator = Validator::make($data, [
             'username' => 'required|string|unique:users,username,'.$user->id,
             'email' => 'required|email|unique:users,email,'.$user->id,
@@ -232,6 +232,13 @@ class UserController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
             ]);
+
+            if($request->password) {
+                $user->update([
+                    'password' => bcrypt($request->password),
+                ]);
+    
+            }
 
             if($request->role_id) {
                 $roleUpdate = RoleUserSub::where('user_id', $user->id)->update([

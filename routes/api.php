@@ -6,6 +6,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ParentCompanyController;
+use App\Http\Controllers\ShortlistedVehicleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,8 @@ Route::group(['middleware' => ['jwt.verify']], function() {
 });
 
 Route::group(['middleware' => ['jwt.verify']], function() {
-    //Route::post('create_company_profile',[ParentCompanyController::class, 'createCompany']);
-    //Route::put('update_company_profile',[ParentCompanyController::class, 'updateCompany']);
+    Route::post('create_company_profile',[ParentCompanyController::class, 'createCompany']);
+    Route::put('update_company_profile/{id}',[ParentCompanyController::class, 'updateCompany']);
+    Route::get('shortlisted_vehicles', [ShortlistedVehicleController::class, 'shortlistedvehicles']);
+    Route::delete('delete_shortlisted_vehicle/{id}', [ShortlistedVehicleController::class, 'deletevehicle']);
 });
