@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ParentCompanyController;
 use App\Http\Controllers\ShortlistedVehicleController;
+use App\Http\Controllers\VehicleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +45,11 @@ Route::group(['middleware' => ['jwt.verify']], function() {
      * Roles
      */
     Route::get('roles', [RoleController::class, 'index']);
+
+    /**
+     * Vehicles
+     */
+    Route::get('vehicles', [VehicleController::class, 'index']);
     
 });
 

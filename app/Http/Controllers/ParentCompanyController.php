@@ -39,8 +39,8 @@ class ParentCompanyController extends Controller
         $validator = Validator::make($data, [
             'company_name' => 'required|string',
             'contact_person' => 'required|string',
-            'Image_path' => 'required|string',
-            'Company_logo_path' => 'required|string',
+            'Image_path' => 'required|image:jpeg,png,jpg,gif,svg|max:5048',
+            'Company_logo_path' => 'required|image:jpeg,png,jpg,gif,svg|max:5048',
             'Address' => 'required|string',
             'Latitude' => 'required|string',
             'Longitude' => 'required|string',
@@ -49,7 +49,7 @@ class ParentCompanyController extends Controller
             'No_Of_Dealers' => 'required|numeric',
             'Establishment_Year' => 'required|numeric',
 
-
+  
         ]);
 
         if ($validator->fails()) {
@@ -60,17 +60,23 @@ class ParentCompanyController extends Controller
             ], 400);
         }
 
+        $uploadFolder = 'gallery';
+        $image = $request->file('Image_path');
+        $logo = $request->file('Company_logo_path');
+        $image_uploaded_path = $image->store($uploadFolder, 'public');
+        $logo_uploaded_path = $logo->store($uploadFolder, 'public');
+
         $company = parent_companies::create([
             'company_name' => $request->company_name,
             'contact_person' => $request->contact_person,
             'user_id' => $request->user_id,
-            'Image_path' => $request->Image_path,
+            'Image_path' => $image_uploaded_path,
             'Establishment_Year' => $request->Establishment_Year,
             'No_Of_Dealers' => $request->No_Of_Dealers,
             'Latitude' => $request->Latitude,
             'Longitude' => $request->Longitude,
             'Address' => $request->Address,
-            'Company_logo_path' => $request->Company_logo_path,
+            'Company_logo_path' => $logo_uploaded_path,
 
         ]);
 
@@ -83,19 +89,17 @@ class ParentCompanyController extends Controller
     public function updateCompany(Request $request, $id)
     {
 
-        $data = $request->only(
-            'user_id',
-            'company_name',
-            'contact_person',
-            'subsidiary_id',
-            'Image_path',
-            'Company_logo_path',
-            'Address',
-            'Latitude',
-            'Longitude',
-            'No_Of_Dealers',
-            'Establishment_Year'
-        );
+        $data = $request->only('user_id',
+        'company_name',
+        'contact_person',
+        'subsidiary_id',
+        'Image_path',
+        'Company_logo_path',
+        'Address',
+        'Latitude',
+        'Longitude',
+        'No_Of_Dealers',
+        'Establishment_Year');
         $validator = Validator::make($data, [
             'company_name' => 'required|string',
             'contact_person' => 'required|string',
