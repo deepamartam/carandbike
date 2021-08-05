@@ -18,7 +18,7 @@ class ParentCompanyController extends Controller
 
     public function __construct()
     {
-        $this->user = JWTAuth::parseToken()->authenticate();
+        //$this->user = JWTAuth::parseToken()->authenticate();
     }
 
     public function createCompany(Request $request)
@@ -27,7 +27,7 @@ class ParentCompanyController extends Controller
             'user_id',
             'company_name',
             'contact_person',
-            'subsidiary_id',
+            // 'subsidiary_id',
             'Image_path',
             'Company_logo_path',
             'Address',
@@ -44,12 +44,12 @@ class ParentCompanyController extends Controller
             'Address' => 'required|string',
             'Latitude' => 'required|string',
             'Longitude' => 'required|string',
-            'subsidiary_id' => 'required|numeric',
+            // 'subsidiary_id' => 'required|numeric',
             'user_id' => 'required|numeric',
             'No_Of_Dealers' => 'required|numeric',
             'Establishment_Year' => 'required|numeric',
 
-  
+
         ]);
 
         if ($validator->fails()) {
@@ -77,6 +77,7 @@ class ParentCompanyController extends Controller
             'Longitude' => $request->Longitude,
             'Address' => $request->Address,
             'Company_logo_path' => $logo_uploaded_path,
+            // 'subsidiary_id'=>$request->subsidiary_id,
 
         ]);
 
@@ -89,28 +90,34 @@ class ParentCompanyController extends Controller
     public function updateCompany(Request $request, $id)
     {
 
-        $data = $request->only('user_id',
-        'company_name',
-        'contact_person',
-        'subsidiary_id',
-        'Image_path',
-        'Company_logo_path',
-        'Address',
-        'Latitude',
-        'Longitude',
-        'No_Of_Dealers',
-        'Establishment_Year');
+        $data = $request->only(
+            'user_id',
+            'company_name',
+            'contact_person',
+            // 'subsidiary_id',
+            'Image_path',
+            'Company_logo_path',
+            'Address',
+            'Latitude',
+            'Longitude',
+            'No_Of_Dealers',
+            'Establishment_Year'
+        );
+
         $validator = Validator::make($data, [
             'company_name' => 'required|string',
             'contact_person' => 'required|string',
             'user_id' => 'required|numeric',
-            'Image_path' => 'required|string',
-            'Company_logo_path' => 'required|string',
+            'Image_path' => 'image:jpeg,png,jpg,gif,svg|max:5048',
+            'Company_logo_path' => 'image:jpeg,png,jpg,gif,svg|max:5048',
             'Address' => 'required|string',
             'Latitude' => 'required|string',
             'Longitude' => 'required|string',
             'No_Of_Dealers' => 'required|numeric',
             'Establishment_Year' => 'required|numeric',
+            // 'subsidiary_id' => 'required|numeric',
+
+
 
 
         ]);
@@ -124,18 +131,28 @@ class ParentCompanyController extends Controller
         }
 
 
+        $uploadFolder = 'gallery';
+
+
+        $image = $request->file('Image_path');
+        $logo = $request->file('Company_logo_path');
+
         try {
 
             $companyupdate = parent_companies::where('id', $id)->update([
                 'company_name' => $request->company_name,
                 'contact_person' => $request->contact_person,
-                'Image_path' => $request->Image_path,
+                'Image_path' => $image?$image->store($uploadFolder, 'public'):parent_companies::where('id',$id)->pluck('Image_path'),
                 'Establishment_Year' => $request->Establishment_Year,
                 'No_Of_Dealers' => $request->No_Of_Dealers,
                 'Latitude' => $request->Latitude,
                 'Longitude' => $request->Longitude,
                 'Address' => $request->Address,
-                'Company_logo_path' => $request->Company_logo_path,
+                'Company_logo_path' =>$logo? $logo->store($uploadFolder, 'public'):parent_companies::where('id',$id)->pluck('Company_logo_path'),
+                // 'subsidiary_id'=>$request->subsidiary_id,
+                'user_id' => $request->user_id,
+
+
 
             ]);
 

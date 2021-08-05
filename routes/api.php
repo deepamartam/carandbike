@@ -8,6 +8,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ParentCompanyController;
 use App\Http\Controllers\ShortlistedVehicleController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\VerificationController;
+//use App\Http\Controllers\FileController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +27,12 @@ Route::post('login', [ApiController::class, 'authenticate']);
 Route::post('register', [ApiController::class, 'register']);
 Route::post('req-password-reset', [ApiController::class, 'reqForgotPassword']);
 Route::post('update-password', [ApiController::class, 'updatePassword']);
+Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
+Route::post('regenerate-otp', [ApiController::class, 'regenerateOtp']);
+
+Route::get('email/verify/{id}', [VerificationController::class, 'verify'])->name('verification.verify');
+Route::get('email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
+
 
 Route::group(['middleware' => ['jwt.verify']], function() {
     Route::get('logout', [ApiController::class, 'logout']);
@@ -58,4 +67,9 @@ Route::group(['middleware' => ['jwt.verify']], function() {
     Route::put('update_company_profile/{id}',[ParentCompanyController::class, 'updateCompany']);
     Route::get('shortlisted_vehicles', [ShortlistedVehicleController::class, 'shortlistedvehicles']);
     Route::delete('delete_shortlisted_vehicle/{id}', [ShortlistedVehicleController::class, 'deletevehicle']);
+    //Route::post('file_upload', [FileController::class, 'upload']);
 });
+
+Route::post('admin-login', [AdminController::class, 'login']);
+Route::post('admin-forgot-password', [AdminController::class, 'ForgotPassword']);
+Route::post('admin-update-password', [AdminController::class, 'updatePassword']);

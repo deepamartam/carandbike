@@ -16,6 +16,7 @@ use App\Mail\SendMail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Twilio\Rest\Client;
 
 class ApiController extends Controller
 {
@@ -31,6 +32,8 @@ class ApiController extends Controller
             'role_id' => 'required|numeric',
         ]);
 
+        $otp = $this->generateCode();
+
         //Send failed response if request is not valid
         if ($validator->fails()) {
             return response()->json([
@@ -39,26 +42,52 @@ class ApiController extends Controller
                 'error' => $validator->messages()], 400);
         }
 
-        //Request is valid, create new user
-        $user = User::create([
-        	'name' => $request->name,
-        	'email' => $request->email,
-            'phone' => $request->phone,
-        	'password' => bcrypt($request->password),
-            
-        ]);
+        try{
 
-        $roleSub = RoleUserSub::create([
-            'user_id' => $user->id,
-            'role_id' => $request->role_id,
-        ]);
+            //Request is valid, create new user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => bcrypt($request->password),
+                'otp' => $otp,
+                
+            ]);
 
-        //User created, return success response
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data' => $user
-        ], Response::HTTP_OK);
+            $roleSub = RoleUserSub::create([
+                'user_id' => $user->id,
+                'role_id' => $request->role_id,
+            ]);
+
+            $user->sendEmailVerificationNotification();
+
+
+            $receiverNumber = $request->phone;
+            $message = "Your phone number verification OTP is: ".$otp;
+
+            $account_sid = getenv("TWILIO_SID");
+            $auth_token = getenv("TWILIO_AUTH_TOKEN");
+            $twilio_number = getenv("TWILIO_FROM");
+
+            $client = new Client($account_sid, $auth_token);
+            $client->messages->create($receiverNumber, [
+                'from' => $twilio_number, 
+                'body' => $message]);
+
+            //User created, return success response
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully. Please verify your email and phone number',
+                'data' => $user
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
+        }
     }
  
     public function authenticate(Request $request)
@@ -98,12 +127,30 @@ class ApiController extends Controller
                 	'message' => 'Login credentials are invalid.',
                 ], 400);
             }
-        } catch (JWTException $e) {
-    	return $credentials;
-            return response()->json([
+
+            $currentUser = JWTAuth::user();
+            
+            if(is_null($currentUser->otp_verified_at)) {
+                return response()->json([
                 	'success' => false,
-                	'message' => 'Could not create token.',
-                ], 500);
+                	'message' => 'Your phone number is not verfied. Please verify',
+                    'token' => $token,
+                ], 400);
+            }
+            if(is_null($currentUser->email_verified_at)) {
+                return response()->json([
+                	'success' => false,
+                	'message' => 'Your email is not verfied. Please verify',
+                    'token' => $token,
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
         }
  	
  		//Token created, return with success response and jwt token
@@ -136,11 +183,12 @@ class ApiController extends Controller
                 'success' => true,
                 'message' => 'User has been logged out'
             ]);
-        } catch (JWTException $exception) {
+        } catch (\Exception $e) {
+            \Log::error($e);
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry, user cannot be logged out'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
         }
     }
  
@@ -285,4 +333,110 @@ class ApiController extends Controller
             'message' => 'Password changed successfully',
         ],200);
     }  
+
+    private function generateCode(){
+        return mt_rand(1000,9999);
+    } 
+    
+    public function regenerateOtp(Request $request) {
+
+        //Validate data
+        $data = $request->only('email');
+        $validator = Validator::make($data, [
+            'email' => 'required|email',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        try {
+
+            $otp = $this->generateCode();
+
+            $user = User::where('email', $request->email)->first();
+
+            $user->update([
+                'otp' => $otp,
+                'otp_verified_at' => Null
+            ]);
+
+            $receiverNumber = $user->phone;
+            $message = "Your phone number verification OTP is: ".$otp;
+
+            $account_sid = getenv("TWILIO_SID");
+            $auth_token = getenv("TWILIO_AUTH_TOKEN");
+            $twilio_number = getenv("TWILIO_FROM");
+
+            $client = new Client($account_sid, $auth_token);
+            $client->messages->create($receiverNumber, [
+                'from' => $twilio_number, 
+                'body' => $message]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP is sent to your phone number.',
+            ], Response::HTTP_OK);
+
+            
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
+        }
+    }
+
+    public function verifyOtp(Request $request) {
+        
+        //Validate data
+        $data = $request->only('code', 'email');
+        $validator = Validator::make($data, [
+            'email' => 'required|email',
+            'code' => 'required|numeric',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        try {
+
+            $savedCode = User::where('email', $request->email)->first();
+            if ($savedCode->otp === $request->code) {
+                //todo get authenticated user here 
+
+                $savedCode->update([
+                    'otp' => Null,
+                    'otp_verified_at' => Carbon::now()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Phone number verified.'
+                ]);
+                
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid OTP provided'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
+        }
+    }
 }

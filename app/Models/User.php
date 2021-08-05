@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     use HasFactory, Notifiable;
     use SoftDeletes;
@@ -29,6 +29,8 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'image',
         'is_active',
+        'otp',
+        'otp_verified_at',
     ];
 
     /**
@@ -50,6 +52,14 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
     ];
 
+
+    public function handle(Registered $event)
+    {
+        if ($event->user instanceof MustVerifyEmail && ! $event->user->hasVerifiedEmail()) {
+            $event->user->sendEmailVerificationNotification();
+        }
+    }
+    
     public function getJWTIdentifier()
     {
         return $this->getKey();
