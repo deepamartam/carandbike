@@ -11,6 +11,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VerificationController;
 //use App\Http\Controllers\FileController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\StoreController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,16 @@ Route::group(['middleware' => ['jwt.verify']], function() {
     Route::put('update-user/{user}', [UserController::class, 'update']);
     Route::post('update-email', [UserController::class, 'changeEmail']);
     Route::post('update-user-password', [UserController::class, 'changePassword']);
+
+    /**
+     * Stores
+     */
+    Route::get('stores', [StoreController::class, 'index']);
+    Route::post('add-store', [StoreController::class, 'store']);
+    Route::put('update-store-status/{store}', [StoreController::class, 'statusUpdate']);
+    Route::delete('delete-store/{store}', [StoreController::class, 'destroy']);
+    Route::get('store/{id}', [StoreController::class, 'show']);
+    Route::put('update-store/{store}', [StoreController::class, 'update']);
 
     /**
      * Roles
