@@ -29,7 +29,7 @@ Route::post('req-password-reset', [ApiController::class, 'reqForgotPassword']);
 Route::post('update-password', [ApiController::class, 'updatePassword']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 Route::post('regenerate-otp', [ApiController::class, 'regenerateOtp']);
-
+Route::post('social-login', [ApiController::class, 'socialLogin']);
 Route::get('email/verify/{id}', [VerificationController::class, 'verify'])->name('verification.verify');
 Route::get('email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
 

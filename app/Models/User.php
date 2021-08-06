@@ -31,6 +31,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'is_active',
         'otp',
         'otp_verified_at',
+        'email_verified_at',
+        'facebook_id',
     ];
 
     /**

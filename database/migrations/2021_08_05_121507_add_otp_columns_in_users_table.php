@@ -16,6 +16,8 @@ class AddOtpColumnsInUsersTable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('otp')->nullable()->after('is_active');
             $table->timestamp('otp_verified_at')->nullable()->after('otp');
+            $table->string('facebook_id')->nullable()->after('otp_verified_at');
+            $table->string('password')->nullable()->change();
         });
     }
 
@@ -29,6 +31,7 @@ class AddOtpColumnsInUsersTable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('otp');
             $table->dropColumn('otp_verified_at');
+            $table->dropColumn('facebook_id');
         });
     }
 }

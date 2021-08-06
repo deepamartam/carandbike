@@ -221,6 +221,78 @@ class ApiController extends Controller
         ], 200);  
     }
 
+    public function socialLogin(Request $request)
+    {
+        //Validate data
+        $data = $request->only('email', 'role_id', 'facebook_id');
+        $validator = Validator::make($data, [
+            'email' => 'required|email',
+            'facebook_id' => 'required',
+            'role_id' => 'required|numeric',
+        ]);
+
+        //Send failed response if request is not valid
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(" ",$validator->messages()->all()),
+                'error' => $validator->messages()], 400);
+        }
+
+        try{
+
+            $user = User::updateOrCreate([
+                'email' => $request->email,
+            ],[
+                'facebook_id' => $request->facebook_id,
+                'email_verified_at' => Carbon::now(),
+                'otp_verified_at' => Carbon::now(),
+            ]);
+
+            if($user->wasRecentlyCreated){
+
+                $roleSub = RoleUserSub::create([
+                    'user_id' => $user->id,
+                    'role_id' => $request->role_id,
+                ]);
+
+            }
+
+            /*$user->sendEmailVerificationNotification();
+
+            $receiverNumber = $request->phone;
+            $message = "Your phone number verification OTP is: ".$otp;
+
+            $account_sid = getenv("TWILIO_SID");
+            $auth_token = getenv("TWILIO_AUTH_TOKEN");
+            $twilio_number = getenv("TWILIO_FROM");
+
+            $client = new Client($account_sid, $auth_token);
+            $client->messages->create($receiverNumber, [
+                'from' => $twilio_number, 
+                'body' => $message]);*/
+
+            /*$credentials = $request->only('email', 'facebook_id');
+            $token = JWTAuth::attempt($credentials);*/
+
+            $token = JWTAuth::fromUser($user);
+
+            //User created, return success response
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+                'message' => 'User logged in.',
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong! Please try after sometime'
+            ], 400);
+        }
+    }
+
     /**
      * Forgot Password
      */
