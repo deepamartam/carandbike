@@ -18,13 +18,12 @@ class ParentCompanyController extends Controller
 
     public function __construct()
     {
-        //$this->user = JWTAuth::parseToken()->authenticate();
+        $this->user = JWTAuth::parseToken()->authenticate();
     }
 
     public function createCompany(Request $request)
     {
         $data = $request->only(
-            'user_id',
             'company_name',
             'contact_person',
             // 'subsidiary_id',
@@ -45,7 +44,6 @@ class ParentCompanyController extends Controller
             'Latitude' => 'required|string',
             'Longitude' => 'required|string',
             // 'subsidiary_id' => 'required|numeric',
-            'user_id' => 'required|numeric',
             'No_Of_Dealers' => 'required|numeric',
             'Establishment_Year' => 'required|numeric',
 
@@ -69,7 +67,7 @@ class ParentCompanyController extends Controller
         $company = parent_companies::create([
             'company_name' => $request->company_name,
             'contact_person' => $request->contact_person,
-            'user_id' => $request->user_id,
+            'user_id' =>$this->user->id ,
             'Image_path' => $image_uploaded_path,
             'Establishment_Year' => $request->Establishment_Year,
             'No_Of_Dealers' => $request->No_Of_Dealers,
@@ -87,11 +85,10 @@ class ParentCompanyController extends Controller
         ], Response::HTTP_OK);
     }
 
-    public function updateCompany(Request $request, $id)
+    public function updateCompany(Request $request)
     {
 
         $data = $request->only(
-            'user_id',
             'company_name',
             'contact_person',
             // 'subsidiary_id',
@@ -107,7 +104,6 @@ class ParentCompanyController extends Controller
         $validator = Validator::make($data, [
             'company_name' => 'required|string',
             'contact_person' => 'required|string',
-            'user_id' => 'required|numeric',
             'Image_path' => 'image:jpeg,png,jpg,gif,svg|max:5048',
             'Company_logo_path' => 'image:jpeg,png,jpg,gif,svg|max:5048',
             'Address' => 'required|string',
@@ -139,18 +135,16 @@ class ParentCompanyController extends Controller
 
         try {
 
-            $companyupdate = parent_companies::where('id', $id)->update([
+            $companyupdate = parent_companies::where('user_id', $this->user->id)->update([
                 'company_name' => $request->company_name,
                 'contact_person' => $request->contact_person,
-                'Image_path' => $image?$image->store($uploadFolder, 'public'):parent_companies::where('id',$id)->pluck('Image_path'),
+                'Image_path' => $image?$image->store($uploadFolder, 'public'):parent_companies::where('user_id',$this->user->id)->pluck('Image_path'),
                 'Establishment_Year' => $request->Establishment_Year,
                 'No_Of_Dealers' => $request->No_Of_Dealers,
                 'Latitude' => $request->Latitude,
                 'Longitude' => $request->Longitude,
                 'Address' => $request->Address,
-                'Company_logo_path' =>$logo? $logo->store($uploadFolder, 'public'):parent_companies::where('id',$id)->pluck('Company_logo_path'),
-                // 'subsidiary_id'=>$request->subsidiary_id,
-                'user_id' => $request->user_id,
+                'Company_logo_path' =>$logo? $logo->store($uploadFolder, 'public'):parent_companies::where('user_id',$this->user->id)->pluck('Company_logo_path'),
 
 
 

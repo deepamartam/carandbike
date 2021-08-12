@@ -12,6 +12,7 @@ use App\Http\Controllers\VerificationController;
 //use App\Http\Controllers\FileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\BidController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,15 +71,24 @@ Route::group(['middleware' => ['jwt.verify']], function() {
      * Vehicles
      */
     Route::get('vehicles', [VehicleController::class, 'index']);
+    Route::post('add-vehicle', [VehicleController::class, 'store']);
+    Route::put('update-vehicle-status/{ownerVehicle}', [VehicleController::class, 'statusUpdate']);
+    Route::delete('delete-vehicle/{ownerVehicle}', [VehicleController::class, 'destroy']);
+    Route::get('vehicle/{id}', [VehicleController::class, 'show']);
+    Route::put('update-vehicle/{ownerVehicle}', [VehicleController::class, 'update']);
     
 });
 
 Route::group(['middleware' => ['jwt.verify']], function() {
     Route::post('create_company_profile',[ParentCompanyController::class, 'createCompany']);
-    Route::put('update_company_profile/{id}',[ParentCompanyController::class, 'updateCompany']);
+    Route::put('update_company_profile',[ParentCompanyController::class, 'updateCompany']);
     Route::get('shortlisted_vehicles', [ShortlistedVehicleController::class, 'shortlistedvehicles']);
     Route::delete('delete_shortlisted_vehicle/{id}', [ShortlistedVehicleController::class, 'deletevehicle']);
     //Route::post('file_upload', [FileController::class, 'upload']);
+    Route::post('send_offer',[BidController::class, 'send_offer']);
+    Route::get('get_offer_list',[BidController::class, 'get_offer_list']);
+    // Route::get('seller_offer_list',[BidController::class, 'seller_offer_list']);
+    // Route::put('accept_reject',[BidController::class, 'accept_reject']);
 });
 
 Route::post('admin-login', [AdminController::class, 'login']);
