@@ -14,7 +14,7 @@ class BidAuctions extends Migration
     public function up()
     {
         //
-        Schema::create('bid_auctions', function (Blueprint $table) {
+        /*Schema::create('bid_auctions', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('user_id');
             $table->unsignedBigInteger('ad_vehicle_id');
@@ -30,7 +30,7 @@ class BidAuctions extends Migration
             $table->softDeletes();
 
           
-        });
+        });*/
     }
 
     /**
